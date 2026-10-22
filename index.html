@@ -1,0 +1,947 @@
+<title>Ponto W · Zoom no Diagrama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --red:#E60012; --ink:#141413; --black:#0A0A0B; --paper:#F4F2EE; --paper2:#E8E5DF; --panel:#121215; --line-d:#2A2A2E;
+  --gray:#A3A09A; --gray-d:#5E5C57; --green:#3DDC97; --green-d:#17945C;
+  --page:#F4F2EE; --frame:#141413; --bezel:#0A0A0B; --cap:#141413; --hatch:rgba(20,20,19,.35); --shadow:rgba(20,20,19,.10);
+  --grid-a:rgba(20,20,19,.11); --grid-b:rgba(20,20,19,.055); --rule:rgba(20,20,19,.18); --box-c:rgba(20,20,19,.32);
+  --red-t:#E60012; --green-t:#17945C;
+  --grid-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg fill='%23141413'%3E%3Cg fill-opacity='.055'%3E%3Crect y='48' width='240' height='1'/%3E%3Crect y='96' width='240' height='1'/%3E%3Crect y='144' width='240' height='1'/%3E%3Crect y='192' width='240' height='1'/%3E%3Crect x='48' width='1' height='240'/%3E%3Crect x='96' width='1' height='240'/%3E%3Crect x='144' width='1' height='240'/%3E%3Crect x='192' width='1' height='240'/%3E%3C/g%3E%3Cg fill-opacity='.11'%3E%3Crect width='240' height='2'/%3E%3Crect width='2' height='240'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  --fc:'Space Grotesk','Segoe UI',Arial,sans-serif;
+  --fb:'Space Grotesk','Segoe UI',Arial,sans-serif;
+  --fm:'IBM Plex Mono',Consolas,'Courier New',monospace;
+}
+/* modo escuro: identidade principal da marca (base #0A0A0B, painel #121215, linhas #2A2A2E, tinta #F4F2EE) */
+:root.dark{
+  --ink:#F4F2EE; --paper:#0A0A0B; --paper2:#121215; --gray-d:#A3A09A; --page:#0A0A0B;
+  --frame:#3A3A40; --bezel:#121215; --cap:#2A2A2E; --hatch:rgba(244,242,238,.22); --shadow:rgba(0,0,0,.45);
+  --grid-a:rgba(42,42,46,.95); --grid-b:rgba(42,42,46,.42); --rule:rgba(244,242,238,.14); --box-c:rgba(244,242,238,.24);
+  --red-t:#FF3B45; --green-t:#3DDC97;
+  --grid-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg fill='%232A2A2E'%3E%3Cg fill-opacity='.42'%3E%3Crect y='48' width='240' height='1'/%3E%3Crect y='96' width='240' height='1'/%3E%3Crect y='144' width='240' height='1'/%3E%3Crect y='192' width='240' height='1'/%3E%3Crect x='48' width='1' height='240'/%3E%3Crect x='96' width='1' height='240'/%3E%3Crect x='144' width='1' height='240'/%3E%3Crect x='192' width='1' height='240'/%3E%3C/g%3E%3Cg fill-opacity='.95'%3E%3Crect width='240' height='2'/%3E%3Crect width='2' height='240'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+:root.na-mesa{--page:#0A0A0B}
+html,body{margin:0;padding:0;width:100%;height:100%;background:var(--page);overflow:hidden}
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform-origin:50% 50%;transform:translate(-50%,-50%);
+  background:var(--paper);overflow:hidden;color:var(--ink);font-family:var(--fb);
+  -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;cursor:default}
+#world{position:absolute;left:0;top:0;width:9600px;height:4320px;transform-origin:0 0}
+#world.moving{will-change:transform}
+#grid{position:absolute;left:-2880px;top:-2160px;width:15360px;height:8640px;pointer-events:none;
+  background-image:var(--grid-img);background-size:240px 240px}
+.abs{position:absolute}
+.red{color:var(--red)}
+.sheet{position:absolute;width:1920px;height:1080px}
+
+/* ---------- fio: barramento, nós, ramais ---------- */
+#wire{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+#bus{fill:none;stroke:var(--red);stroke-width:10;stroke-linejoin:round}
+.glow{fill:none;stroke:var(--red);stroke-width:36;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .4s}
+.glow.on{opacity:.16}
+.fd{stroke:var(--ink);stroke-width:4;transition:stroke .5s}
+.fd.on{stroke:var(--red);stroke-width:6}
+.node .body{fill:var(--paper);stroke:var(--ink);stroke-width:5;transition:fill .4s,stroke .4s}
+.node .halo{fill:none;stroke:var(--red);stroke-width:4;opacity:0;transition:opacity .6s}
+.node .ring{fill:none;stroke:var(--red);stroke-width:5;opacity:0}
+.node .blade{stroke:var(--ink);stroke-width:8;stroke-linecap:round;transform-box:fill-box;transform-origin:0 50%;transform:rotate(-34deg);transition:transform .45s cubic-bezier(.5,0,.3,1.4),stroke .5s}
+.node .ct{fill:var(--ink);transition:fill .5s}
+.node.on .body{fill:var(--red);stroke:var(--red)}
+.node.on .halo{opacity:.35}
+.node.on .blade{transform:rotate(0deg);stroke:#F4F2EE}
+.node.on .ct{fill:#F4F2EE}
+.br{fill:none;stroke:var(--ink);stroke-width:6;transition:stroke .5s}
+.br.on{stroke:var(--red);stroke-width:8}
+.term{fill:var(--paper);stroke:var(--ink);stroke-width:5;transition:fill .5s,stroke .5s}
+.term.on{fill:var(--red);stroke:var(--red)}
+.jn{fill:var(--ink);transition:fill .5s}
+.jn.on{fill:var(--red)}
+
+/* ---------- tipografia técnica ---------- */
+.kick{font-family:var(--fm);font-size:24px;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-d);white-space:nowrap}
+.num{position:absolute;left:116px;font-family:var(--fc);font-weight:700;font-size:150px;line-height:.8;letter-spacing:-.04em;
+  color:transparent;-webkit-text-stroke:3px var(--ink);transition:color .4s,-webkit-text-stroke-color .4s}
+.sheet.on .num{color:var(--red);-webkit-text-stroke-color:var(--red)}
+.name{position:absolute;left:120px;font-family:var(--fc);font-weight:700;font-size:72px;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.desc{position:absolute;left:120px;width:550px;font-family:var(--fc);font-weight:500;font-size:72px;line-height:1;letter-spacing:-.035em;color:var(--ink)}
+.frase{position:absolute;left:120px;width:530px;font-family:var(--fb);font-weight:500;font-size:35px;line-height:1.22;letter-spacing:-.01em;color:var(--ink)}
+.below .num{top:226px}.below .name{top:366px}.below .desc,.below .frase{top:470px}
+.above .num{top:50px}.above .name{top:190px}.above .desc,.above .frase{top:294px}
+.box{position:absolute;left:80px;width:1760px;border:3px dashed var(--box-c);transition:border-color .4s}
+.below .box{top:206px;height:756px}
+.above .box{top:20px;height:850px}
+.sheet.on .box{border-color:rgba(230,0,18,.55)}
+.tag{position:absolute;box-sizing:border-box;max-width:520px;font-family:var(--fm);font-size:24px;line-height:1.3;color:var(--ink);
+  background:var(--paper);border:2px solid var(--ink);padding:5px 12px 5px 32px}
+.tag::before{content:"";position:absolute;left:11px;top:50%;width:11px;height:11px;margin-top:-5.5px;background:var(--red)}
+.cap{position:absolute;width:340px;text-align:center;font-family:var(--fm);font-size:24px;line-height:1.2;color:var(--gray-d);text-transform:uppercase;letter-spacing:.04em}
+.ld{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.ld .cs{fill:none;stroke:var(--paper);stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.ld .ln{fill:none;stroke:var(--red);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.ld .dt{fill:var(--red);stroke:#F4F2EE;stroke-width:3}
+
+/* ---------- aparelhos ---------- */
+.dev img{display:block;object-fit:contain;background:#000}
+.dev::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0;border-radius:inherit;background:var(--paper);opacity:0;pointer-events:none;transition:opacity .4s}
+.sheet:not(.on) .dev::after{opacity:.6}
+.phone{position:absolute;box-sizing:border-box;padding:12px;background:var(--bezel);border-radius:48px;
+  box-shadow:0 0 0 3px var(--frame),14px 14px 0 0 var(--shadow)}
+.phone img{width:100%;height:100%;border-radius:36px}
+.browser{position:absolute;background:var(--bezel);border:3px solid var(--frame);border-radius:14px;overflow:hidden;
+  box-shadow:14px 14px 0 0 var(--shadow)}
+.browser .bar{height:40px;background:#121215;display:flex;align-items:center;padding:0 16px;gap:10px}
+.browser .bar i{width:13px;height:13px;border-radius:50%;background:#2A2A2E}
+.browser .bar i:first-child{background:var(--red)}
+.browser .bar b{margin-left:16px;height:18px;width:38%;border-radius:9px;background:#2A2A2E}
+.lid{position:absolute;box-sizing:border-box;padding:16px;background:var(--bezel);border-radius:20px 20px 6px 6px;
+  box-shadow:0 0 0 3px var(--frame),14px 14px 0 0 var(--shadow)}
+.lbase{position:absolute;box-sizing:border-box;height:26px;background:var(--paper2);border:3px solid var(--frame);border-radius:0 0 24px 24px}
+.totem{position:absolute;width:340px}
+.totem .tcap{height:36px;background:var(--cap);border-radius:24px 24px 0 0;position:relative}
+.totem .tcap::after{content:"";position:absolute;left:50%;top:14px;width:90px;height:8px;margin-left:-45px;border-radius:4px;background:var(--red)}
+.totem .tscr{box-sizing:border-box;padding:12px;background:var(--bezel);box-shadow:0 0 0 3px var(--frame)}
+.totem .tscr img{width:316px;height:562px}
+.totem .tneck{width:110px;height:100px;margin:0 auto;box-sizing:border-box;border:3px solid var(--frame);border-top:0;
+  background:repeating-linear-gradient(45deg,var(--hatch) 0 2px,transparent 2px 12px)}
+.totem .tfoot{width:280px;height:24px;margin:0 auto;box-sizing:border-box;border:3px solid var(--frame);background:var(--paper2)}
+
+/* ---------- formatos ---------- */
+.fmt{position:absolute;left:120px;top:304px;width:1680px;display:grid;grid-template-columns:360px 260px 250px 240px 250px 220px;column-gap:20px}
+.fmt .h{font-family:var(--fm);font-size:24px;line-height:1.2;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-d);
+  display:flex;align-items:flex-end;padding-bottom:12px;border-bottom:3px solid var(--ink);height:72px;box-sizing:border-box}
+.fmt .c{height:106px;display:flex;align-items:center;border-bottom:2px solid var(--rule);box-sizing:border-box}
+.fmt .v{font-family:var(--fc);font-weight:600;font-size:44px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fmt .big{font-family:var(--fc);font-weight:700;font-size:100px;line-height:.8;color:var(--red);width:96px}
+.fmt .nm{font-family:var(--fc);font-weight:700;font-size:50px;letter-spacing:-.02em}
+.fmt .ve{font-family:var(--fb);font-weight:500;font-size:28px;line-height:1.2;color:var(--ink)}
+.fmt .vg{font-family:var(--fb);font-weight:500;font-size:30px;line-height:1.15}
+.stamp{position:absolute;font-family:var(--fm);font-size:24px;font-weight:500;letter-spacing:.08em;background:var(--paper);color:var(--red-t);border:2px solid var(--red-t);padding:3px 12px;white-space:nowrap}
+
+/* ---------- carimbo (fixo na tela) ---------- */
+#carimbo{position:absolute;right:40px;bottom:24px;z-index:5;display:grid;grid-template-columns:64px auto auto;
+  border:3px solid var(--ink);background:var(--paper);font-family:var(--fm);font-size:24px;line-height:1;color:var(--ink)}
+#carimbo .lg{grid-row:1 / 3;border-right:2px solid var(--ink);display:flex;align-items:center;justify-content:center}
+#carimbo .c{padding:7px 14px;white-space:nowrap;letter-spacing:.04em}
+#carimbo .r{border-left:2px solid var(--ink);text-align:right}
+#carimbo .r2{border-top:2px solid var(--ink)}
+#carimbo .ac{color:var(--red-t);font-weight:500}
+
+/* ---------- slides novos da prancha ---------- */
+.ttl{position:absolute;font-family:var(--fc);font-weight:700;line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.lst{position:absolute}
+.lst .lh{display:flex;gap:44px;font-family:var(--fm);font-size:24px;letter-spacing:.08em;color:var(--gray-d);padding-bottom:12px;border-bottom:3px solid var(--ink)}
+.lst .lr{display:flex;align-items:center;gap:44px;height:104px;border-bottom:2px solid var(--rule);font-family:var(--fc);font-weight:600;font-size:44px;letter-spacing:-.01em;white-space:nowrap}
+.lst .lr b{font-family:var(--fm);font-weight:500;font-size:28px;color:var(--red-t);width:48px}
+.mod{position:absolute;box-sizing:border-box;width:520px;height:300px;padding:30px 32px;border:3px solid var(--ink);background:var(--paper)}
+.mod .k{font-family:var(--fm);font-size:24px;letter-spacing:.08em;color:var(--gray-d)}
+.mod .n{font-family:var(--fc);font-weight:700;font-size:64px;line-height:1;letter-spacing:-.02em;margin-top:16px}
+.mod .d{font-family:var(--fb);font-weight:500;font-size:32px;line-height:1.25;margin-top:16px;color:var(--ink)}
+.stp{position:absolute;width:480px}
+.stp .n{font-family:var(--fm);font-weight:500;font-size:120px;line-height:1;color:var(--red)}
+.stp .t{font-family:var(--fc);font-weight:700;font-size:64px;line-height:1;letter-spacing:-.02em;margin-top:18px}
+.stp .d{font-family:var(--fb);font-weight:500;font-size:32px;line-height:1.25;margin-top:16px;color:var(--gray-d)}
+.zl{position:absolute;white-space:nowrap}
+.zl b{display:block;font-family:var(--fm);font-weight:500;font-size:26px;color:var(--red-t);margin-bottom:6px}
+.zl span{font-family:var(--fc);font-weight:600;font-size:46px;line-height:1;letter-spacing:-.01em}
+.lg2{display:flex;align-items:center;gap:16px;font-family:var(--fb);font-weight:500;font-size:28px;line-height:48px;white-space:nowrap}
+.lg2 i{width:22px;height:22px;flex:0 0 22px;box-sizing:border-box}
+.exr{display:flex;align-items:baseline;justify-content:space-between;height:60px;border-bottom:2px solid var(--rule)}
+.exr span{font-family:var(--fb);font-weight:500;font-size:30px;color:var(--gray-d)}
+.exr b{font-family:var(--fc);font-weight:600;font-size:42px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.pw{display:flex;align-items:center;gap:16px;font-family:var(--fb);font-weight:500;font-size:30px;line-height:56px;white-space:nowrap}
+.pw i{width:20px;height:20px;flex:0 0 20px}
+.pw b{margin-left:auto;font-family:var(--fm);font-weight:500}
+
+/* ---------- camadas por cima do mundo ---------- */
+.ovl{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;visibility:hidden}
+#mesa{z-index:10;background:#0A0A0B;color:#F4F2EE;visibility:visible !important;pointer-events:none;will-change:opacity,transform}
+#mesa .live{position:absolute;left:128px;top:292px;display:flex;align-items:center;gap:18px;font-family:var(--fm);font-size:28px;letter-spacing:.3em;color:#A3A09A}
+#mesa .live i{width:16px;height:16px;border-radius:50%;background:var(--red);box-shadow:0 0 14px 3px rgba(230,0,18,.7);animation:vivo 1.6s ease-in-out infinite}
+@keyframes vivo{0%,100%{opacity:1}50%{opacity:.35}}
+#mesa .mt{position:absolute;left:120px;top:352px;font-family:var(--fc);font-weight:700;font-size:150px;line-height:.95;letter-spacing:-.03em}
+#mesa .mt div{white-space:nowrap}
+#mesa .mt span{display:inline-block}
+#mesa .m2{color:var(--red);text-shadow:0 0 28px rgba(230,0,18,.35)}
+#mesa .chev{position:absolute;left:556px;top:548px}
+#mesa .breath{animation:respira 4.5s ease-in-out infinite}
+@keyframes respira{0%,100%{opacity:.5}50%{opacity:1}}
+#mesa .chips{position:absolute;left:128px;top:692px;display:flex;gap:16px}
+#mesa .chips span{border:2px solid #2A2A2E;border-radius:40px;padding:12px 22px;font-family:var(--fm);font-size:26px;letter-spacing:.12em;white-space:nowrap}
+#mesa .ft{position:absolute;top:984px;font-family:var(--fm);font-size:26px;letter-spacing:.3em;color:#A3A09A;display:flex;align-items:center;gap:16px}
+#fim{z-index:4;pointer-events:none;visibility:visible !important;will-change:opacity;background-color:var(--paper);
+  background-image:var(--grid-img);background-size:240px 240px}
+#fim .palco{position:absolute;left:800px;top:150px;width:1000px;box-sizing:border-box;border:3px solid var(--frame);background:var(--cap);padding:10px}
+#fim .palco img{display:block;width:100%;height:auto}
+#fim .palco-leg{position:absolute;right:120px;top:108px;text-align:right;font-family:var(--fm);font-size:24px;letter-spacing:.08em;color:var(--gray-d);white-space:nowrap}
+
+/* cores fixas dos desenhos passam pelas variáveis do tema (no claro o valor é o mesmo) */
+#world [stroke="#141413"], #fim [stroke="#141413"], #carimbo [stroke="#141413"]{stroke:var(--ink)}
+#world [fill="#141413"], #fim [fill="#141413"]{fill:var(--ink)}
+#world [fill="#F4F2EE"]{fill:var(--paper)}
+#world [fill="#5E5C57"]{fill:var(--gray-d)}
+#world [stroke="#17945C"]{stroke:var(--green-t)}
+#world [style*="background:#141413"]{background:var(--ink) !important}
+#world [style*="solid #141413"]{border-color:var(--ink) !important}
+#world [style*="color:#17945C"]{color:var(--green-t) !important}
+
+:root.dark #wire rect[width="9520"], :root.dark #wire rect[width="9472"]{stroke:#3A3A40}
+
+/* botão de tema (sol/lua) */
+#tema{position:absolute;top:22px;right:22px;z-index:12;width:46px;height:46px;padding:0;border-radius:50%;cursor:pointer;
+  border:2px solid var(--frame);background:var(--paper);color:var(--ink);opacity:.5;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+#tema:hover,#tema:focus-visible{opacity:1;outline:none}
+#tema.oculto{opacity:0;pointer-events:none}
+:root.na-mesa #tema{display:none}
+#gire{display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:30;padding:8px 14px;border-radius:18px;background:rgba(10,10,11,.86);color:#F4F2EE;font:500 14px/1.25 'Space Grotesk','Segoe UI',Arial,sans-serif;white-space:nowrap;pointer-events:none}
+@media (max-width:600px) and (orientation:portrait){#gire{display:block}}
+#tema .sol{display:none}
+:root.dark #tema .sol{display:block}
+:root.dark #tema .lua{display:none}
+
+.instant *, .instant *::before, .instant *::after{transition:none !important}
+@media (prefers-reduced-motion: reduce){ *, *::before, *::after{transition:none !important;animation:none !important} }
+</style>
+<script>try{if(localStorage.getItem("pontow-tema")==="escuro")document.documentElement.classList.add("dark")}catch(e){}</script>
+<div id="stage" class="instant" aria-live="polite">
+<div id="world">
+  <div id="grid"></div>
+
+  <!-- ===== o fio: capa → barramento → saída ===== -->
+  <svg id="wire" width="9600" height="4320" viewBox="0 0 9600 4320">
+    <defs>
+      <pattern id="hatch" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="16" stroke="#141413" stroke-opacity=".35" stroke-width="3"/>
+      </pattern>
+    </defs>
+    <rect x="40" y="40" width="9520" height="4240" fill="none" stroke="#141413" stroke-width="4"/>
+    <rect x="64" y="64" width="9472" height="4192" fill="none" stroke="#141413" stroke-opacity=".3" stroke-width="2"/>
+
+    <path class="glow" data-k="1" d="M930 2380 V2660 Q930 2700 970 2700 H1060"/>
+    <path class="glow" data-k="2" d="M1060 2700 H2020"/>
+    <path class="glow" data-k="3" d="M2020 2700 H2980"/>
+    <path class="glow" data-k="4" d="M2980 2700 H3940"/>
+    <path class="glow" data-k="5" d="M3940 2700 H4900"/>
+    <path class="glow" data-k="6" d="M4900 2700 H5820 Q5860 2700 5860 2660 V1960"/>
+
+    <path id="bus" d="M0 840 H620 L660 880 L712 700 L766 900 L800 840 H890 Q930 840 930 880 V2660 Q930 2700 970 2700 H5820 Q5860 2700 5860 2660 V1960"/>
+    <circle cx="712" cy="700" r="13" fill="#F4F2EE" stroke="#E60012" stroke-width="6"/>
+
+    <!-- ramais até cada detalhe -->
+    <line class="fd" data-k="1" x1="1060" y1="2764" x2="1060" y2="2806"/>
+    <line class="fd" data-k="2" x1="2020" y1="2636" x2="2020" y2="2590"/>
+    <line class="fd" data-k="3" x1="2980" y1="2764" x2="2980" y2="2806"/>
+    <line class="fd" data-k="4" x1="3940" y1="2636" x2="3940" y2="2590"/>
+    <line class="fd" data-k="5" x1="4900" y1="2764" x2="4900" y2="2806"/>
+
+    <!-- saída: Pix repartido -->
+    <path class="br" data-k="6" d="M5860 1960 H6542"/>
+    <path class="br" data-k="6" d="M5860 2140 H6542"/>
+    <path class="br" data-k="6" d="M5860 2320 H6542"/>
+    <path class="br" data-k="6" d="M5860 2500 H6542"/>
+    <circle class="jn" data-k="6" cx="5860" cy="2140" r="13"/>
+    <circle class="jn" data-k="6" cx="5860" cy="2320" r="13"/>
+    <circle class="jn" data-k="6" cx="5860" cy="2500" r="13"/>
+    <circle class="term" data-k="6" cx="6560" cy="1960" r="18"/>
+    <circle class="term" data-k="6" cx="6560" cy="2140" r="18"/>
+    <circle class="term" data-k="6" cx="6560" cy="2320" r="18"/>
+    <circle class="term" data-k="6" cx="6560" cy="2500" r="18"/>
+
+    <!-- nós / disjuntores das 5 etapas -->
+    <g class="node" data-k="1" transform="translate(1060 2700)"><circle class="halo" r="92"/><circle class="ring" r="64"/><circle class="body" r="64"/><g transform="translate(-26 0)"><line class="blade" x1="0" y1="0" x2="52" y2="0"/></g><circle class="ct" cx="-26" r="8"/><circle class="ct" cx="26" r="8"/></g>
+    <g class="node" data-k="2" transform="translate(2020 2700)"><circle class="halo" r="92"/><circle class="ring" r="64"/><circle class="body" r="64"/><g transform="translate(-26 0)"><line class="blade" x1="0" y1="0" x2="52" y2="0"/></g><circle class="ct" cx="-26" r="8"/><circle class="ct" cx="26" r="8"/></g>
+    <g class="node" data-k="3" transform="translate(2980 2700)"><circle class="halo" r="92"/><circle class="ring" r="64"/><circle class="body" r="64"/><g transform="translate(-26 0)"><line class="blade" x1="0" y1="0" x2="52" y2="0"/></g><circle class="ct" cx="-26" r="8"/><circle class="ct" cx="26" r="8"/></g>
+    <g class="node" data-k="4" transform="translate(3940 2700)"><circle class="halo" r="92"/><circle class="ring" r="64"/><circle class="body" r="64"/><g transform="translate(-26 0)"><line class="blade" x1="0" y1="0" x2="52" y2="0"/></g><circle class="ct" cx="-26" r="8"/><circle class="ct" cx="26" r="8"/></g>
+    <g class="node" data-k="5" transform="translate(4900 2700)"><circle class="halo" r="92"/><circle class="ring" r="64"/><circle class="body" r="64"/><g transform="translate(-26 0)"><line class="blade" x1="0" y1="0" x2="52" y2="0"/></g><circle class="ct" cx="-26" r="8"/><circle class="ct" cx="26" r="8"/></g>
+
+    <circle id="pulse" cx="1060" cy="2700" r="18" fill="#F4F2EE" stroke="#E60012" stroke-width="8" opacity="0"/>
+  </svg>
+
+  <!-- ===== VISTA 01 · CAPA (canto superior esquerdo) ===== -->
+  <div class="sheet" id="capa" style="left:0;top:0">
+    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080" viewBox="0 0 1920 1080">
+      <!-- planta do Standard: 2 vagas de 2,5 × 5,0 m + faixa do carregador -->
+      <rect x="1260" y="200" width="500" height="60" fill="url(#hatch)"/>
+      <rect x="1260" y="200" width="500" height="560" fill="none" stroke="#141413" stroke-width="4"/>
+      <line x1="1260" y1="260" x2="1760" y2="260" stroke="#141413" stroke-width="3"/>
+      <line x1="1510" y1="260" x2="1510" y2="760" stroke="#141413" stroke-width="3" stroke-dasharray="22 12"/>
+      <rect x="1366" y="210" width="40" height="40" fill="#E60012"/>
+      <rect x="1616" y="210" width="40" height="40" fill="#E60012"/>
+      <rect x="1325" y="320" width="120" height="330" rx="34" fill="none" stroke="#141413" stroke-width="3"/>
+      <rect x="1343" y="372" width="84" height="64" rx="10" fill="none" stroke="#141413" stroke-width="2.5"/>
+      <rect x="1343" y="548" width="84" height="44" rx="10" fill="none" stroke="#141413" stroke-width="2.5"/>
+      <path d="M1385 320 V270" stroke="#E60012" stroke-width="4" stroke-dasharray="8 6"/>
+      <!-- cotas -->
+      <g stroke="#141413" stroke-width="2.5">
+        <line x1="1260" y1="772" x2="1260" y2="826"/><line x1="1760" y1="772" x2="1760" y2="826"/>
+        <line x1="1260" y1="810" x2="1760" y2="810"/>
+        <line x1="1250" y1="820" x2="1270" y2="800"/><line x1="1750" y1="820" x2="1770" y2="800"/>
+        <line x1="1772" y1="200" x2="1836" y2="200"/><line x1="1772" y1="760" x2="1836" y2="760"/>
+        <line x1="1820" y1="200" x2="1820" y2="760"/>
+        <line x1="1810" y1="210" x2="1830" y2="190"/><line x1="1810" y1="770" x2="1830" y2="750"/>
+        <line x1="1510" y1="540" x2="1760" y2="540"/>
+        <line x1="1500" y1="550" x2="1520" y2="530"/><line x1="1750" y1="550" x2="1770" y2="530"/>
+      </g>
+      <g data-min="24" font-family="IBM Plex Mono, Consolas, monospace" font-size="24" fill="#141413">
+        <text x="1510" y="852" text-anchor="middle">5,0 m</text>
+        <text x="1856" y="480" text-anchor="middle" transform="rotate(-90 1856 480)">5,6 m</text>
+        <text x="1635" y="526" text-anchor="middle">2,5 m</text>
+        <text x="1385" y="736" text-anchor="middle">VAGA 1</text>
+        <text x="1635" y="736" text-anchor="middle">VAGA 2</text>
+      </g>
+    </svg>
+    <div class="kick abs" style="left:1260px;top:146px" data-min="24">Planta · Standard · 2 vagas</div>
+
+    <div class="kick abs" style="left:120px;top:146px" data-min="24">EV Challenge GoodWe × FIAP · 2026.2</div>
+    <svg width="210" height="210" viewBox="0 0 120 120" role="img" aria-label="Ponto W" class="abs" style="left:120px;top:250px"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#141413" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></svg>
+    <div class="abs" data-min="120" style="left:393px;top:278px;font-family:var(--fc);font-weight:700;font-size:120px;line-height:.9;letter-spacing:-.02em;white-space:nowrap">PONTO <span class="red">W</span></div>
+    <div class="abs" style="left:397px;top:404px;font-family:var(--fm);font-weight:500;font-size:24px;letter-spacing:.34em;color:var(--gray-d);white-space:nowrap" data-min="24">ELETROPOSTOS INTELIGENTES</div>
+    <div class="abs" style="left:120px;top:548px;font-family:var(--fc);font-weight:600;font-size:56px;line-height:1;letter-spacing:-.02em;white-space:nowrap" data-min="56">Rentável. Escalável. <span class="red">Tecnológica.</span></div>
+    <div class="abs" style="left:120px;top:652px;padding:6px 0 6px 20px;border-left:8px solid var(--red);font-family:var(--fc);font-weight:600;font-size:40px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" data-min="40">Uma franquia GoodWe</div>
+    <div class="kick abs" style="left:962px;top:902px;color:var(--ink)" data-min="24">↓ Início do fluxo</div>
+  </div>
+
+  <!-- ===== VISTA 02 · FORMATOS (canto superior direito) ===== -->
+  <div class="sheet" id="formatos" style="left:7680px;top:0">
+    <div class="kick abs" style="left:120px;top:92px" data-min="24">Detalhe · formatos de franquia</div>
+    <div class="abs" data-min="96" style="left:120px;top:128px;font-family:var(--fc);font-weight:700;font-size:90px;line-height:1;letter-spacing:-.02em;white-space:nowrap">Formatos <span class="red">de franquia</span></div>
+    <div class="abs" style="left:0;top:0;width:1920px;height:1080px" data-min="24">
+      <div class="fmt" style="grid-template-columns:440px 400px 380px 1fr">
+        <div class="h">Formato</div><div class="h">Vagas</div><div class="h">Potência por vaga</div><div class="h">Carregador GoodWe</div>
+
+        <div class="c"><span class="big">1</span><span class="nm">Light</span></div>
+        <div class="c v">1 vaga</div><div class="c v">7 kW</div><div class="c v">GW7K-HCA-20</div>
+
+        <div class="c"><span class="big">2</span><span class="nm">Standard</span></div>
+        <div class="c v">2 vagas</div><div class="c v">7 kW</div><div class="c v">GW7K-HCA-20</div>
+
+        <div class="c"><span class="big">4</span><span class="nm">Hub</span></div>
+        <div class="c v">4 vagas</div><div class="c v">11 kW</div><div class="c v">GW11K-HCA-20</div>
+
+        <div class="c"><span class="big">N</span><span class="nm">Enterprise</span></div>
+        <div class="c ve">sob medida</div>
+        <div class="c ve" style="grid-column:span 2">definidos na análise GoodWe</div>
+      </div>
+      <div class="abs" style="left:120px;top:818px;width:1300px">
+        <div style="font-family:var(--fb);font-weight:500;font-size:28px;line-height:1.2;color:var(--gray-d)"><b style="color:var(--ink);font-weight:600">Enterprise:</b> a empresa define a necessidade e a GoodWe analisa o local e dimensiona as vagas.</div>
+        <div style="margin-top:8px;font-family:var(--fb);font-weight:600;font-size:28px;line-height:1.2">Só abre quando a IA prevê 2,3 h de uso por dia por vaga.</div>
+        <div style="margin-top:8px;font-family:var(--fb);font-weight:600;font-size:28px;line-height:1.2">A GoodWe recebe <span class="red">6% de royalty</span> e <span class="red">2% de fundo de marketing</span>, só sobre a recarga.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 02 · O PROBLEMA ===== -->
+  <div class="sheet" id="problema" style="left:1920px;top:0">
+    <div class="kick abs" style="left:120px;top:96px" data-min="24">O problema</div>
+    <div class="ttl" style="left:120px;top:340px;font-size:92px" data-min="92">O carregador<br>existe. <span class="red">Falta o<br>negócio.</span></div>
+    <div class="lst" style="left:980px;top:268px;width:820px" data-min="24">
+      <div class="lh"><span style="width:48px">ITEM</span><span>PROBLEMA</span></div>
+      <div class="lr"><b>01</b>Carregador sem escala</div><div class="lr"><b>02</b>Não atende todas as personas</div><div class="lr"><b>03</b>Faltam eletropostos no país</div><div class="lr"><b>04</b>Recarga não vira venda</div><div class="lr"><b>05</b>Cliente desconectado</div>
+    </div>
+  </div>
+
+  <!-- ===== 03 · A SOLUÇÃO ===== -->
+  <div class="sheet" id="solucao" style="left:3840px;top:0">
+    <div class="kick abs" style="left:120px;top:96px" data-min="24">A solução</div>
+    <div class="ttl" style="left:120px;top:140px;font-size:104px" data-min="104">Três frentes.<br><span class="red">Uma solução.</span></div>
+    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080">
+      <line x1="140" y1="500" x2="1780" y2="500" stroke="#E60012" stroke-width="10"/>
+      <circle cx="140" cy="500" r="16" fill="#F4F2EE" stroke="#E60012" stroke-width="6"/>
+      <g stroke="#141413" stroke-width="4"><line x1="380" y1="500" x2="380" y2="600"/><line x1="960" y1="500" x2="960" y2="600"/><line x1="1540" y1="500" x2="1540" y2="600"/></g>
+      <g fill="#E60012"><circle cx="380" cy="500" r="13"/><circle cx="960" cy="500" r="13"/><circle cx="1540" cy="500" r="13"/></g>
+    </svg>
+    <div class="mod" style="left:120px;top:600px" data-min="24"><div class="k">01 · NEGÓCIO</div><div class="n">Business</div><div class="d">Franquias que espalham eletropostos</div></div><div class="mod" style="left:700px;top:600px" data-min="24"><div class="k">02 · HARDWARE</div><div class="n">Recharge</div><div class="d">O eletroposto inteligente</div></div><div class="mod" style="left:1280px;top:600px" data-min="24"><div class="k">03 · SOFTWARE</div><div class="n">Integration</div><div class="d">Um sistema que liga todo mundo</div></div>
+  </div>
+
+  <!-- ===== 04 · FRANQUIA W, PASSO A PASSO ===== -->
+  <div class="sheet" id="passo" style="left:5760px;top:0">
+    <div class="kick abs" style="left:120px;top:96px" data-min="24">Business · a franquia</div>
+    <div class="ttl" style="left:120px;top:136px;font-size:96px" data-min="96">Franquia W, <span class="red">passo a passo</span></div>
+    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080">
+      <polyline points="210,600 590,800 960,470 1330,800 1710,600" fill="none" stroke="#E60012" stroke-opacity=".15" stroke-width="26" stroke-linejoin="round"/>
+      <polyline points="210,600 590,800 960,470 1330,800 1710,600" fill="none" stroke="#E60012" stroke-width="6" stroke-linejoin="round"/>
+      <g fill="#F4F2EE" stroke="#141413" stroke-width="5"><circle cx="210" cy="600" r="20"/><circle cx="590" cy="800" r="20"/><circle cx="960" cy="470" r="20"/><circle cx="1330" cy="800" r="20"/></g>
+      <circle cx="1710" cy="600" r="24" fill="#3DDC97" stroke="#17945C" stroke-width="4"/>
+    </svg>
+    <div data-min="26">
+      <div class="zl" style="left:128px;top:468px"><b>01</b><span>Espaço e energia</span></div>
+      <div class="zl" style="left:960px;top:336px;transform:translateX(-50%);text-align:center"><b>03</b><span>Recebe o pacote GoodWe</span></div>
+      <div class="zl" style="left:1792px;top:468px;transform:translateX(-100%);text-align:right"><b style="color:#17945C">05</b><span style="color:#17945C">Recarga vira venda</span></div>
+      <div class="zl" style="left:590px;top:842px;transform:translateX(-50%);text-align:center"><b>02</b><span>Compra a franquia</span></div>
+      <div class="zl" style="left:1330px;top:842px;transform:translateX(-50%);text-align:center"><b>04</b><span>Opera o ponto</span></div>
+    </div>
+  </div>
+
+  <!-- ===== 07 · DO TOQUE AO PAGAMENTO ===== -->
+  <div class="sheet" id="toque" style="left:7680px;top:1080px">
+    <div class="kick abs" style="left:120px;top:96px" data-min="24">Recharge · no eletroposto da mesa</div>
+    <div class="ttl" style="left:120px;top:136px;font-size:100px" data-min="100">Do toque <span class="red">ao pagamento</span></div>
+    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080">
+      <defs><marker id="arw" markerWidth="12" markerHeight="12" refX="8" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#141413"/></marker></defs>
+      <line x1="600" y1="440" x2="684" y2="440" stroke="#141413" stroke-width="5" marker-end="url(#arw)"/>
+      <line x1="1200" y1="440" x2="1284" y2="440" stroke="#141413" stroke-width="5" marker-end="url(#arw)"/>
+      <line x1="120" y1="790" x2="1800" y2="790" stroke="#141413" stroke-opacity=".18" stroke-width="2"/>
+    </svg>
+    <div class="stp" style="left:120px;top:380px" data-min="24"><div class="n">01</div><div class="t">Sessão</div><div class="d">Tempo, energia e custo ao vivo</div></div>
+    <div class="stp" style="left:720px;top:380px" data-min="24"><div class="n">02</div><div class="t">Pagamento</div><div class="d">Pix, Google Pay, Apple Pay ou PayPal</div></div>
+    <div class="stp" style="left:1320px;top:380px" data-min="24"><div class="n" style="color:#17945C">03</div><div class="t">Aprovado</div><div class="d">Recibo e repasse ao franqueado</div></div>
+    <div class="abs" style="left:120px;top:830px;font-family:var(--fb);font-weight:500;font-size:40px;white-space:nowrap;color:var(--gray-d)" data-min="40">Um botão por tela. <b style="color:var(--ink);font-weight:600">O motorista paga, o dono acompanha.</b></div>
+  </div>
+
+  <!-- ===== 14 · O PREÇO ACOMPANHA A HORA ===== -->
+  <div class="sheet" id="preco" style="left:7680px;top:2160px">
+    <div class="kick abs" style="left:120px;top:96px" data-min="24">Integration · tarifa por horário</div>
+    <div class="ttl" style="left:120px;top:136px;font-size:92px" data-min="92">O preço <span class="red">acompanha a hora</span></div>
+    <div class="abs" style="left:120px;top:258px;font-family:var(--fm);font-size:26px;letter-spacing:.06em;white-space:nowrap" data-min="26">PREÇO BASE <span class="red">×</span> FAIXA DE HORÁRIO <span class="red">×</span> ÚLTIMAS VAGAS</div>
+    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080">
+      <g stroke="#141413" stroke-opacity=".3" stroke-width="2" stroke-dasharray="8 8"><line x1="230" y1="392" x2="1286" y2="392"/><line x1="230" y1="700" x2="1286" y2="700"/></g>
+      <rect x="230" y="560" width="34" height="140" fill="#3DDC97"/><rect x="274" y="560" width="34" height="140" fill="#3DDC97"/><rect x="318" y="560" width="34" height="140" fill="#3DDC97"/><rect x="362" y="560" width="34" height="140" fill="#3DDC97"/><rect x="406" y="560" width="34" height="140" fill="#3DDC97"/><rect x="450" y="560" width="34" height="140" fill="#3DDC97"/><rect x="494" y="560" width="34" height="140" fill="#3DDC97"/><rect x="538" y="560" width="34" height="140" fill="#3DDC97"/><rect x="582" y="560" width="34" height="70" fill="#A3A09A"/><rect x="626" y="557" width="34" height="6" fill="#A3A09A"/><rect x="670" y="557" width="34" height="6" fill="#A3A09A"/><rect x="714" y="557" width="34" height="6" fill="#A3A09A"/><rect x="758" y="557" width="34" height="6" fill="#A3A09A"/><rect x="802" y="557" width="34" height="6" fill="#A3A09A"/><rect x="846" y="557" width="34" height="6" fill="#A3A09A"/><rect x="890" y="557" width="34" height="6" fill="#A3A09A"/><rect x="934" y="476" width="34" height="84" fill="#A3A09A"/><rect x="978" y="392" width="34" height="168" fill="#E60012"/><rect x="1022" y="392" width="34" height="168" fill="#E60012"/><rect x="1066" y="392" width="34" height="168" fill="#E60012"/><rect x="1110" y="476" width="34" height="84" fill="#A3A09A"/><rect x="1154" y="557" width="34" height="6" fill="#A3A09A"/><rect x="1198" y="560" width="34" height="70" fill="#A3A09A"/><rect x="1242" y="560" width="34" height="140" fill="#3DDC97"/>
+      <line x1="226" y1="560" x2="1290" y2="560" stroke="#141413" stroke-width="3"/>
+      <g font-family="IBM Plex Mono, Consolas, monospace" font-size="24" fill="#5E5C57" data-min="24">
+        <text x="212" y="400" text-anchor="end">×1,12</text><text x="212" y="568" text-anchor="end">×1,00</text><text x="212" y="708" text-anchor="end">×0,90</text>
+        <text x="247" y="752" text-anchor="middle">0h</text><text x="511" y="752" text-anchor="middle">6h</text><text x="775" y="752" text-anchor="middle">12h</text><text x="1039" y="752" text-anchor="middle">18h</text><text x="1259" y="752" text-anchor="middle">23h</text>
+      </g>
+    </svg>
+    <div class="abs" style="left:1380px;top:340px;width:420px" data-min="24">
+      <div class="lg2"><i style="background:#E60012"></i>Pico 17h–19h +12%</div>
+      <div class="lg2"><i style="background:#3DDC97"></i>Vale 23h–7h −10%</div>
+      <div class="lg2" style="line-height:34px;padding:7px 0"><i style="background:#A3A09A"></i><span>Transições de 1 h<br>entre as faixas</span></div>
+      <div class="lg2"><i style="border:3px solid #141413"></i>Últimas vagas até +8%</div>
+      <div style="margin-top:34px;font-family:var(--fm);font-size:24px;letter-spacing:.06em;color:var(--gray-d)">BASE SP · R$ 1,90/kWh</div>
+      <div class="stamp" style="position:static;display:inline-block;margin-top:10px">SUGERIDO · AJUSTÁVEL</div>
+      <div style="margin-top:12px">
+        <div class="exr"><span>Vale</span><b>R$ 1,71</b></div>
+        <div class="exr"><span>Normal</span><b>R$ 1,90</b></div>
+        <div class="exr"><span class="red">Pico</span><b class="red">R$ 2,13</b></div>
+      </div>
+    </div>
+    <div class="abs" style="left:120px;top:806px;font-family:var(--fb);font-weight:600;font-size:30px;line-height:1.3;white-space:nowrap" data-min="30">Preço mostrado antes, com o motivo, e travado por 10 minutos.<br><span style="color:var(--gray-d)">Nunca abaixo do custo, nunca acima de 130% da base.</span></div>
+  </div>
+
+  <!-- ===== VISTA 03 · VISÃO GERAL (rótulos que só aparecem de longe) ===== -->
+  <div class="abs" style="left:1080px;top:1350px;font-family:var(--fc);font-weight:700;font-size:200px;line-height:.95;letter-spacing:-.01em;white-space:nowrap" data-sl="8">O fluxo <span class="red">do sistema</span></div>
+  <div class="abs" style="left:1086px;top:1558px;font-family:var(--fc);font-weight:500;font-size:76px;line-height:1;letter-spacing:-.02em;color:var(--gray-d);white-space:nowrap" data-sl="8">Cinco etapas, um só sistema: do pedido da franquia ao Pix.</div>
+  <div class="abs" style="left:1080px;top:1790px" data-sl="8">
+    <div style="font-family:var(--fm);font-size:72px;line-height:1.2;letter-spacing:.06em;color:var(--gray-d)">LEGENDA</div>
+    <div style="display:flex;align-items:center;gap:36px;margin-top:40px">
+      <svg width="110" height="110" viewBox="-60 -60 120 120"><circle r="52" fill="#F4F2EE" stroke="#141413" stroke-width="5"/><line x1="-22" y1="0" x2="20" y2="-26" stroke="#141413" stroke-width="8" stroke-linecap="round"/><circle cx="-22" r="7" fill="#141413"/><circle cx="22" r="7" fill="#141413"/></svg>
+      <span style="font-family:var(--fc);font-weight:600;font-size:72px;line-height:1;letter-spacing:-.02em">Etapa a visitar</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:36px;margin-top:30px">
+      <svg width="110" height="110" viewBox="-60 -60 120 120"><circle r="52" fill="#E60012"/><line x1="-22" y1="0" x2="22" y2="0" stroke="#F4F2EE" stroke-width="8" stroke-linecap="round"/><circle cx="-22" r="7" fill="#F4F2EE"/><circle cx="22" r="7" fill="#F4F2EE"/></svg>
+      <span style="font-family:var(--fc);font-weight:600;font-size:72px;line-height:1;letter-spacing:-.02em">Etapa ligada</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:36px;margin-top:30px">
+      <svg width="110" height="110" viewBox="0 0 110 110"><line x1="0" y1="55" x2="110" y2="55" stroke="#E60012" stroke-width="12"/></svg>
+      <span style="font-family:var(--fc);font-weight:600;font-size:72px;line-height:1;letter-spacing:-.02em">Um só sistema</span>
+    </div>
+  </div>
+  <div class="abs" style="left:5900px;top:1744px;font-family:var(--fm);font-size:72px;line-height:1.2;letter-spacing:.06em;color:var(--gray-d);white-space:nowrap" data-min="72">PIX REPARTIDO</div>
+  <div class="abs" style="left:5920px;top:1842px;font-family:var(--fc);font-weight:600;font-size:96px;line-height:1" data-min="96">Energia</div>
+  <div class="abs" style="left:5920px;top:2022px;font-family:var(--fc);font-weight:600;font-size:96px;line-height:1" data-min="96">GoodWe</div>
+  <div class="abs" style="left:5920px;top:2202px;font-family:var(--fc);font-weight:600;font-size:96px;line-height:1" data-min="96">Pix</div>
+  <div class="abs" style="left:5920px;top:2382px;font-family:var(--fc);font-weight:600;font-size:96px;line-height:1" data-min="96">Comércio</div>
+  <div class="abs" data-min="96" style="left:1080px;top:3790px;font-family:var(--fc);font-weight:600;font-size:96px;line-height:1;white-space:nowrap">Cada Pix já sai repartido: <span class="red">energia, GoodWe, Pix e comércio.</span></div>
+
+  <!-- ===== ETAPA 01 · SEJA GOODWE (abaixo do barramento) ===== -->
+  <div class="sheet below" id="st1" data-k="1" style="left:960px;top:2600px">
+    <div class="box"></div>
+    <div class="num" data-min="150">01</div>
+    <div class="name" data-min="72">Seja GoodWe</div>
+    <div class="desc" data-ov data-min="72">O comerciante avalia o estacionamento em 3D pelo celular e pede a franquia.</div>
+    <div class="frase" data-z="1">O comerciante vê o Ponto W no próprio estacionamento antes de investir.</div>
+    <div class="phone dev" style="left:700px;top:224px;width:340px;height:709px"><img src="assets/gsvr-viabilidade.jpg" alt="Viabilidade no celular: nota 87, Aprovar"></div>
+    <div class="browser dev" style="left:1080px;top:224px"><div class="bar"><i></i><i></i><i></i><b></b></div><img src="assets/gsvr-projecao.jpg" style="width:720px;height:542px" alt="Foto do estacionamento com o Ponto W projetado"></div>
+    <svg class="ld" width="1920" height="1080" data-z="1">
+      <path class="cs" d="M1121 860 V602"/><path class="ln" d="M1121 860 V602"/><circle class="dt" cx="1121" cy="602" r="8"/>
+      <path class="cs" d="M300 694 H650 L738 401"/><path class="ln" d="M300 694 H650 L738 401"/><circle class="dt" cx="738" cy="401" r="8"/>
+      <path class="cs" d="M300 782 H664 L740 579"/><path class="ln" d="M300 782 H664 L740 579"/><circle class="dt" cx="740" cy="579" r="8"/>
+    </svg>
+    <div class="tag" style="left:120px;top:672px" data-z="1">Cabe um Standard</div>
+    <div class="tag" style="left:120px;top:760px" data-z="1">Nota 87 · 4,6 h por dia por vaga</div>
+    <div class="tag" style="left:1080px;top:846px" data-z="1">8,0 m × 6,5 m · 52 m²</div>
+  </div>
+
+  <!-- ===== ETAPA 02 · HOMOLOGAÇÃO (acima do barramento) ===== -->
+  <div class="sheet above" id="st2" data-k="2" style="left:1920px;top:1720px">
+    <div class="box"></div>
+    <div class="num" data-min="150">02</div>
+    <div class="name" data-min="72">Homologação</div>
+    <div class="desc" data-ov data-min="72">A IA da GoodWe dá a nota <span style="white-space:nowrap">(0–100),</span> vê as fotos e aprova.</div>
+    <div class="frase" data-z="2">Só entra na rede o ponto que tem uso para se pagar.</div>
+    <div class="abs" style="left:120px;top:440px;width:520px" data-z="2">
+      <div class="kick" style="color:var(--ink)">Pesos da IA · nota 0–100</div>
+      <div style="display:flex;gap:4px;margin-top:14px;height:30px">
+        <i style="flex:30;background:#E60012"></i><i style="flex:28;background:#FF8F96"></i><i style="flex:24;background:#141413"></i><i style="flex:18;background:#A3A09A"></i>
+      </div>
+      <div style="margin-top:14px;font-family:var(--fb);font-weight:500;font-size:26px;line-height:42px">
+        <div style="display:flex;align-items:center;gap:14px"><i style="width:18px;height:18px;background:#E60012"></i>Fluxo de pessoas<b style="margin-left:auto;font-family:var(--fm);font-weight:500">30%</b></div>
+        <div style="display:flex;align-items:center;gap:14px"><i style="width:18px;height:18px;background:#FF8F96"></i>Carros elétricos na região<b style="margin-left:auto;font-family:var(--fm);font-weight:500">28%</b></div>
+        <div style="display:flex;align-items:center;gap:14px"><i style="width:18px;height:18px;background:#141413"></i>Segmento do comércio<b style="margin-left:auto;font-family:var(--fm);font-weight:500">24%</b></div>
+        <div style="display:flex;align-items:center;gap:14px"><i style="width:18px;height:18px;background:#A3A09A"></i>Capacidade elétrica<b style="margin-left:auto;font-family:var(--fm);font-weight:500">18%</b></div>
+      </div>
+    </div>
+    <div class="browser dev" style="left:700px;top:120px"><div class="bar"><i></i><i></i><i></i><b></b></div><img src="assets/homologacao-fotos.jpg" style="width:1100px;height:619px" alt="Homologação: fila de pedidos, nota 87 e fotos do local"></div>
+    <svg class="ld" width="1920" height="1080" data-z="2">
+      <path class="cs" d="M1190 74 V301"/><path class="ln" d="M1190 74 V301"/><circle class="dt" cx="1190" cy="301" r="8"/>
+      <path class="cs" d="M1494 826 V686"/><path class="ln" d="M1494 826 V686"/><circle class="dt" cx="1494" cy="686" r="8"/>
+    </svg>
+    <div class="tag" style="left:1060px;top:50px" data-z="2">Nota 87/100 · Aprovar</div>
+    <div class="tag" style="left:1180px;top:806px;max-width:none" data-z="2">Fotos do local: hoje e com o Ponto W</div>
+  </div>
+  <!-- ===== ETAPA 03 · FRANQUEADO (abaixo do barramento) ===== -->
+  <div class="sheet below" id="st3" data-k="3" style="left:2880px;top:2600px">
+    <div class="box"></div>
+    <div class="num" data-min="150">03</div>
+    <div class="name" data-min="72">Franqueado</div>
+    <div class="desc" data-ov data-min="72">Define o preço, liga o totem ao ponto e ativa. O ponto entra no mapa.</div>
+    <div class="frase" data-z="3">O comerciante acompanha receita, uso das vagas e retorno ao vivo.</div>
+    <div class="lid dev" style="left:720px;top:236px;width:1072px;height:682px"><img src="assets/franqueado-painel.jpg" style="width:1040px;height:650px" alt="Painel da unidade do franqueado"></div>
+    <div class="lbase" style="left:680px;top:918px;width:1152px"></div>
+    <svg class="ld" width="1920" height="1080" data-z="3">
+      <path class="cs" d="M300 694 H680 V511 H1744 V411"/><path class="ln" d="M300 694 H680 V511 H1744 V411"/><circle class="dt" cx="1744" cy="411" r="8"/>
+      <path class="cs" d="M300 780 H700 V705 H1176 V806"/><path class="ln" d="M300 780 H700 V705 H1176 V806"/><circle class="dt" cx="1176" cy="806" r="8"/>
+    </svg>
+    <div class="tag" style="left:120px;top:672px" data-z="3">Retorno e payback no painel</div>
+    <div class="tag" style="left:120px;top:758px" data-z="3">Receita e uso por dia, ao vivo</div>
+  </div>
+
+  <!-- ===== ETAPA 04 · TOTEM (acima do barramento) ===== -->
+  <div class="sheet above" id="st4" data-k="4" style="left:3840px;top:1720px">
+    <div class="box"></div>
+    <div class="num" data-min="150">04</div>
+    <div class="name" data-min="72">Totem</div>
+    <div class="desc" data-ov data-min="72">O carro conecta; o totem mostra o QR e o preço travado por 10 minutos.</div>
+    <div class="frase" data-z="4">O totem mostra o preço antes, com o motivo, e trava por 10 minutos.</div>
+    <div class="totem dev" style="left:700px;top:50px"><div class="tcap"></div><div class="tscr"><img src="assets/totem-qr.jpg" alt="Totem: QR, código 7RYU e preço"></div><div class="tneck"></div><div class="tfoot"></div></div>
+    <div class="totem dev" style="left:1080px;top:50px"><div class="tcap"></div><div class="tscr"><img src="assets/totem-carregando.jpg" alt="Totem: carregando"></div><div class="tneck"></div><div class="tfoot"></div></div>
+    <div class="totem dev" style="left:1460px;top:50px"><div class="tcap"></div><div class="tscr"><img src="assets/totem-pago.jpg" alt="Totem: pagamento confirmado"></div><div class="tneck"></div><div class="tfoot"></div></div>
+    <div class="cap" style="left:700px;top:814px" data-z="4">1 · QR e preço</div>
+    <div class="cap" style="left:1080px;top:814px" data-z="4">2 · Carregando</div>
+    <div class="cap" style="left:1460px;top:814px" data-z="4">3 · Pago</div>
+    <svg class="ld" width="1920" height="1080" data-z="4">
+      <path class="cs" d="M300 517 H713"/><path class="ln" d="M300 517 H713"/><circle class="dt" cx="713" cy="517" r="8"/>
+      <path class="cs" d="M300 604 H713"/><path class="ln" d="M300 604 H713"/><circle class="dt" cx="713" cy="604" r="8"/>
+    </svg>
+    <div class="tag" style="left:120px;top:498px" data-z="4">Código 7RYU e preço valem 10 min</div>
+    <div class="tag" style="left:120px;top:568px" data-z="4">Sem app? Paga com Pix no próprio totem.</div>
+  </div>
+
+  <!-- ===== ETAPA 05 · CELULAR (abaixo do barramento) ===== -->
+  <div class="sheet below" id="st5" data-k="5" style="left:4800px;top:2600px">
+    <div class="box"></div>
+    <div class="num" data-min="150">05</div>
+    <div class="name" data-min="72">Celular</div>
+    <div class="desc" data-ov data-min="72">O motorista confirma o mesmo preço, acompanha ao vivo e paga com Pix.</div>
+    <div class="frase" data-z="5">Lê o QR, confere o mesmo preço, carrega e paga com Pix.</div>
+    <div class="phone dev" style="left:700px;top:270px;width:324px;height:674px"><img src="assets/cel-codigo.jpg" alt="Celular: confirmar recarga com o código 7RYU"></div>
+    <div class="phone dev" style="left:1088px;top:270px;width:324px;height:674px"><img src="assets/cel-carga.jpg" alt="Celular: recarga ao vivo"></div>
+    <div class="phone dev" style="left:1476px;top:270px;width:324px;height:674px"><img src="assets/cel-recibo.jpg" alt="Celular: recibo e repartição do Pix"></div>
+    <svg class="ld" width="1920" height="1080" data-z="5">
+      <path class="cs" d="M900 240 V379"/><path class="ln" d="M900 240 V379"/><circle class="dt" cx="900" cy="379" r="8"/>
+      <path class="cs" d="M1250 240 V292 L1196 345"/><path class="ln" d="M1250 240 V292 L1196 345"/><circle class="dt" cx="1196" cy="345" r="8"/>
+      <path class="cs" d="M1700 240 V694"/><path class="ln" d="M1700 240 V694"/><circle class="dt" cx="1700" cy="694" r="8"/>
+    </svg>
+    <div class="tag" style="left:658px;top:212px;max-width:none" data-z="5">Mesmo código, mesmo preço</div>
+    <div class="tag" style="left:1104px;top:212px" data-z="5">Acompanha ao vivo</div>
+    <div class="tag" style="left:1499px;top:212px" data-z="5">Pix já repartido</div>
+  </div>
+</div><!-- /world -->
+
+<!-- ===== 06 · OLHE PARA A MESA (cena escura por cima do mundo, layout do original) ===== -->
+<div id="mesa" class="ovl" aria-label="Olhe para a mesa">
+  <div class="live"><i></i>AO VIVO</div>
+  <div class="mt"><div><span class="m1">Olhe para</span> <span class="m2">a</span></div><div><span class="m2">mesa.</span></div></div>
+  <svg class="chev" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 22 L32 42 L50 22" fill="none" stroke="#E60012" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="chips"><span>TELA TOUCH 2,8"</span><span>FIRMWARE C++</span><span>CORPO IMPRESSO EM 3D</span></div>
+  <svg class="abs" style="left:0;top:0" width="1920" height="1080" viewBox="0 0 1920 1080" aria-hidden="true">
+    <defs>
+      <radialGradient id="mspot" cx="50%" cy="42%" r="50%"><stop offset="0" stop-color="#F4F2EE" stop-opacity=".10"/><stop offset=".35" stop-color="#E60012" stop-opacity=".08"/><stop offset=".7" stop-color="#E60012" stop-opacity=".03"/><stop offset="1" stop-color="#E60012" stop-opacity="0"/></radialGradient>
+      <radialGradient id="mscr" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#E60012" stop-opacity=".42"/><stop offset="1" stop-color="#E60012" stop-opacity=".04"/></radialGradient>
+    </defs>
+    <ellipse class="spot" cx="1532" cy="540" rx="470" ry="520" fill="url(#mspot)"/>
+    <rect class="dr" x="1326" y="806" width="412" height="52" rx="12" fill="none" stroke="#2A2A2E" stroke-width="5"/>
+    <path class="dr" d="M1675 634 C1700 690 1748 742 1700 806" fill="none" stroke="#F4F2EE" stroke-width="5" stroke-linecap="round"/>
+    <rect class="dr fl" x="1416" y="250" width="232" height="556" rx="30" fill="#121215" stroke="#F4F2EE" stroke-width="6"/>
+    <rect class="dr fl" x="1402" y="214" width="260" height="38" rx="10" fill="#121215" stroke="#F4F2EE" stroke-width="6"/>
+    <rect class="dr fl" x="1648" y="510" width="49" height="124" rx="12" fill="#121215" stroke="#F4F2EE" stroke-width="5"/>
+    <g class="scr"><rect class="breath" x="1450" y="295" width="164" height="221" rx="6" fill="url(#mscr)"/></g>
+    <rect class="dr" x="1447" y="292" width="170" height="227" rx="8" fill="none" stroke="#E60012" stroke-width="5"/>
+    <g class="sym"><g transform="translate(1490 364) scale(.7)"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#F4F2EE" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></g></g>
+    <line class="dr" x1="1465" y1="588" x2="1598" y2="588" stroke="#2A2A2E" stroke-width="7" stroke-linecap="round"/>
+    <line class="dr" x1="1465" y1="627" x2="1560" y2="627" stroke="#2A2A2E" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <div class="ft" style="left:128px"><svg width="34" height="34" viewBox="0 0 120 120" role="img" aria-label="Ponto W"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#F4F2EE" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></svg>06</div>
+  <div class="ft" style="right:128px">RECHARGE · 1/2</div>
+</div>
+
+<!-- ===== 16 · FECHAMENTO (texto por cima do recuo que mostra a prancha inteira) ===== -->
+<div id="fim" class="ovl" aria-label="Fechamento">
+  <div class="abs" style="left:120px;top:78px"><svg width="52" height="52" viewBox="0 0 120 120" role="img" aria-label="Ponto W"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#141413" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></svg></div><div class="kick abs" style="left:192px;top:92px">Ponto W · Business · Recharge · Integration</div>
+  <div class="ttl" style="left:120px;top:150px;font-size:88px">O ponto final<br>que a GoodWe<br>precisava.<br><span class="red">O Ponto W.</span></div>
+  <div class="palco"><img loading="eager" src="assets/palco.jpg" alt="Celular, totem e os painéis do franqueado e da GoodWe na mesma recarga, ao vivo"></div>
+  <div class="palco-leg">A MESMA RECARGA, AO VIVO, EM 4 TELAS</div>
+  <div class="abs" style="left:120px;top:540px;font-family:var(--fb);font-weight:600;font-size:32px;line-height:1.3;white-space:nowrap">Tecnologia da GoodWe.<br><span style="color:var(--gray-d)">Conforto para o cliente.</span><br><span class="red">Movimento para a loja.</span></div>
+  <svg class="abs" style="left:0;top:640px;overflow:visible" width="1240" height="420" aria-label="Escala, Personas, Oferta, Venda, Conexão">
+    <polyline points="40,170 150,170 410,290 670,80 930,290 1190,170 1236,170" fill="none" stroke="#E60012" stroke-opacity=".18" stroke-width="24" stroke-linejoin="round"/>
+    <polyline points="40,170 150,170 410,290 670,80 930,290 1190,170 1236,170" fill="none" stroke="#E60012" stroke-width="6" stroke-linejoin="round"/>
+    <g fill="#3DDC97"><circle cx="150" cy="170" r="24"/><circle cx="410" cy="290" r="24"/><circle cx="670" cy="80" r="24"/><circle cx="930" cy="290" r="24"/><circle cx="1190" cy="170" r="24"/></g>
+    <g fill="none" stroke="#0A0A0B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M140 170 l7 8 l14 -16"/><path d="M400 290 l7 8 l14 -16"/><path d="M660 80 l7 8 l14 -16"/><path d="M920 290 l7 8 l14 -16"/><path d="M1180 170 l7 8 l14 -16"/>
+    </g>
+    <g font-family="Space Grotesk, Segoe UI, Arial, sans-serif" font-weight="600" font-size="30" fill="#141413" text-anchor="middle">
+      <text x="150" y="128">Escala</text><text x="410" y="350">Personas</text><text x="670" y="38">Oferta</text><text x="930" y="350">Venda</text><text x="1190" y="128">Conexão</text>
+    </g>
+  </svg>
+</div>
+
+<button id="tema" type="button" aria-label="Alternar tema claro ou escuro (tecla T)" title="Tema claro/escuro (T)"><svg class="lua" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><svg class="sol" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2.2"/><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg></button>
+<div id="carimbo" aria-label="Carimbo da prancha">
+  <div class="lg"><svg width="46" height="46" viewBox="0 0 120 120" role="img" aria-label="Ponto W"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#141413" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></svg></div>
+  <div class="c">PRANCHA 01 · FLUXO DO SISTEMA</div><div class="c r" id="cbE">ESC 1:1</div>
+  <div class="c r2" id="cbV">VISTA 01 · PONTO W</div><div class="c r r2" id="cbN"><span class="ac">1</span> / 15</div>
+</div>
+</div><!-- /stage -->
+<div id="gire" role="note">Gire o celular para ver a apresentação</div>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" onload="window.__gsapPronto&&window.__gsapPronto()"></script>
+<script>
+(function(){
+  'use strict';
+  var G = window.gsap || null;
+  window.__gsapPronto = function(){ G = window.gsap || G; };
+  var stage = document.getElementById('stage');
+  var world = document.getElementById('world');
+  var RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* Cada slide é uma câmera sobre o mundo: [centro x, centro y, largura vista] (a altura sai do 16:9). */
+  var SL = [
+    { v:'PONTO W',             c:[ 960,  540,  1920] },  /* 01 capa */
+    { v:'O PROBLEMA',          c:[2880,  540,  1920] },  /* 02 */
+    { v:'A SOLUÇÃO',           c:[4800,  540,  1920] },  /* 03 */
+    { v:'BUSINESS · 1/2',      c:[6720,  540,  1920] },  /* 04 passo a passo */
+    { v:'BUSINESS · 2/2',      c:[8640,  540,  1920] },  /* 05 formatos */
+    { v:'RECHARGE · 1/2',      c:[8640, 1620,  1920] },  /* 06 mesa: cena escura por cima; a câmera já espera no 07 */
+    { v:'RECHARGE · 2/2',      c:[8640, 1620,  1920] },  /* 07 do toque ao pagamento */
+    { v:'INTEGRATION · 1/7',   c:[3840, 2700,  5760] },  /* 08 visão geral do fluxo */
+    { v:'INTEGRATION · 2/7',   c:[1920, 3140,  1920] },  /* 09 etapa 01 */
+    { v:'INTEGRATION · 3/7',   c:[2880, 2260,  1920] },  /* 10 etapa 02 */
+    { v:'INTEGRATION · 4/7',   c:[3840, 3140,  1920] },  /* 11 etapa 03 */
+    { v:'INTEGRATION · 5/7',   c:[4800, 2260,  1920] },  /* 12 etapa 04 */
+    { v:'INTEGRATION · 6/7',   c:[5760, 3140,  1920] },  /* 13 etapa 05 */
+    { v:'INTEGRATION · 7/7',   c:[8640, 2700,  1920] },  /* 14 preço por hora */
+    { v:'PONTO W',             c:[2240, 3760, 15360] }   /* 15 fechamento: a prancha inteira em miniatura */
+  ];
+  var N = SL.length;
+  var S_MESA = 5, S_FLUXO = 7, S_ET1 = 8, S_FIM = 14;
+  var MESA = document.getElementById('mesa'), FIM = document.getElementById('fim');
+  /* decodifica todas as imagens já no carregamento (evita travadas no meio dos voos) */
+  Array.prototype.forEach.call(document.querySelectorAll('#stage img'), function(im){ if (im.decode) im.decode().catch(function(){}); });
+  var NODE_X = [1060, 2020, 2980, 3940, 4900];
+  var cam = { x:960, y:540, w:1920, r:0 };
+  var cur = -1, flight = null, calls = [];
+
+  /* palco 1920×1080 em letterbox */
+  function fit(){
+    var k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + k + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function setCam(){
+    var s = 1920 / cam.w;
+    world.style.transform = 'translate(960px,540px) rotate(' + cam.r.toFixed(3) + 'deg) scale(' + s + ') translate(' + (-cam.x) + 'px,' + (-cam.y) + 'px)';
+  }
+
+  /* Caminho de zoom + pan "ótimo" de van Wijk & Nuij (o mesmo do d3.interpolateZoom):
+     a câmera recua o quanto precisa para enxergar a origem e o destino e volta a aproximar. */
+  function zoomPath(p0, p1){
+    var rho = 1.6, rho2 = rho*rho, rho4 = rho2*rho2;
+    var ux0=p0[0], uy0=p0[1], w0=p0[2], ux1=p1[0], uy1=p1[1], w1=p1[2];
+    var dx = ux1-ux0, dy = uy1-uy0, d2 = dx*dx + dy*dy, f, S;
+    if (d2 < 1e-6){
+      S = Math.log(w1/w0) / rho;
+      f = function(t){ return [ux0 + t*dx, uy0 + t*dy, w0 * Math.exp(rho * t * S)]; };
+    } else {
+      var d1 = Math.sqrt(d2);
+      var b0 = (w1*w1 - w0*w0 + rho4*d2) / (2*w0*rho2*d1);
+      var b1 = (w1*w1 - w0*w0 - rho4*d2) / (2*w1*rho2*d1);
+      var r0 = Math.log(Math.sqrt(b0*b0+1) - b0);
+      var r1 = Math.log(Math.sqrt(b1*b1+1) - b1);
+      S = (r1 - r0) / rho;
+      f = function(t){
+        var s = t*S, c0 = Math.cosh(r0);
+        var u = w0 / (rho2*d1) * (c0 * Math.tanh(rho*s + r0) - Math.sinh(r0));
+        return [ux0 + u*dx, uy0 + u*dy, w0 * c0 / Math.cosh(rho*s + r0)];
+      };
+    }
+    f.S = Math.abs(S);
+    return f;
+  }
+
+  /* Nível de detalhe: o que aparece em cada câmera (texto sempre >= 24 px efetivos). */
+  var LOD = Array.prototype.slice.call(world.querySelectorAll('[data-min],[data-ov],[data-sl],[data-z]'));
+  function vis(el, n){
+    var s = 1920 / SL[n].c[2], d = el.dataset;
+    if (d.z && (+d.z) !== n - S_FLUXO) return false;
+    if (d.sl && d.sl.split(',').indexOf(String(n + 1)) < 0) return false;
+    if (d.ov !== undefined && s >= 0.9) return false;
+    if (d.min && (+d.min) * s < 23.5) return false;
+    return true;
+  }
+  function isOn(k, n){ return k <= 5 ? n >= k + S_FLUXO : n >= S_ET1 + 5; }
+  function kEls(k){ return world.querySelectorAll('[data-k="' + k + '"]'); }
+  function setOn(k, on, burst){
+    var els = kEls(k);
+    for (var i = 0; i < els.length; i++) els[i].classList.toggle('on', on);
+    if (burst && G && k <= 5){
+      var ring = world.querySelector('.node[data-k="' + k + '"] .ring');
+      G.fromTo(ring, { attr:{ r:64 }, opacity:.9 }, { attr:{ r:190 }, opacity:0, duration:1.1, ease:'power2.out' });
+    }
+  }
+
+  function state(n, anim, dur){
+    LOD.forEach(function(el){
+      var v = vis(el, n);
+      if (el._v === v) return;
+      el._v = v;
+      if (!anim){
+        if (G) G.killTweensOf(el);
+        el.style.opacity = v ? '1' : '0';
+        el.style.visibility = v ? 'inherit' : 'hidden';
+      } else if (v){
+        G.to(el, { autoAlpha:1, duration:.5, delay:dur * .6, overwrite:true });
+      } else {
+        G.to(el, { autoAlpha:0, duration:.3, overwrite:true });
+      }
+    });
+    for (var k = 1; k <= 6; k++){
+      var on = isOn(k, n), first = kEls(k)[0];
+      if (first.classList.contains('on') === on) continue;
+      if (anim && on){
+        (function(kk){ calls.push(G.delayedCall(dur * (kk === 6 ? .4 : .6), function(){ setOn(kk, true, true); })); })(k);
+      } else setOn(k, on, false);
+    }
+  }
+
+  /* pulso de corrente correndo pelo barramento entre uma etapa e a próxima */
+  function pulse(from, n, dur){
+    var p = document.getElementById('pulse');
+    var last = S_ET1 + 5;
+    if (!(n === from + 1 && from >= S_ET1 && n <= last)) return;
+    var x0 = NODE_X[from - S_ET1], x1 = n < last ? NODE_X[n - S_ET1] : 5860;
+    var t = G.timeline();
+    t.set(p, { attr:{ cx:x0, cy:2700 }, opacity:1 })
+     .to(p, { attr:{ cx:x1 }, duration:dur * (n === last ? .25 : .6), ease:'power1.inOut' });
+    if (n === last) t.to(p, { attr:{ cy:1960 }, duration:dur * .15, ease:'power1.inOut' });
+    t.to(p, { opacity:0, duration:.25 });
+    calls.push(t);
+  }
+
+  /* ---------- "Olhe para a mesa": apagar as luzes; o pano sobe para o 7 e desce ao voltar ---------- */
+  function MQ(sel){ return Array.prototype.slice.call(MESA.querySelectorAll(sel)); }
+  var M = { live:MESA.querySelector('.live'), m1:MQ('.m1'), m2:MQ('.m2'), chips:MQ('.chips span'), chev:MESA.querySelector('.chev'),
+            spot:MESA.querySelector('.spot'), dr:MQ('.dr'), fl:MQ('.fl'), scr:MESA.querySelector('.scr'), sym:MESA.querySelector('.sym') };
+  var mesaTl = null;
+  function mesaParts(){ return [M.live, M.chev, M.spot, M.scr, M.sym].concat(M.m1, M.m2, M.chips, M.dr, M.fl); }
+  function mesaRest(){                       /* conteúdo da cena no estado de repouso (completo) */
+    if (mesaTl){ mesaTl.kill(); mesaTl = null; }
+    if (G){ G.killTweensOf(mesaParts()); G.set(mesaParts(), { clearProps:'all' }); }
+  }
+  function mesaEnter(){                      /* apagar as luzes e acender a cena aos poucos */
+    mesaRest();
+    MESA._ready = false;
+    var lens = M.dr.map(function(el){ try { return Math.ceil(el.getTotalLength()) + 2; } catch (e) { return 1600; } });
+    var tl = G.timeline();
+    tl.set(MESA, { y:0, opacity:0 })
+      .set([M.live, M.chev, M.spot, M.scr, M.sym].concat(M.m1, M.m2, M.chips), { opacity:0 })
+      .set(M.dr, { strokeDasharray:function(i){ return lens[i]; }, strokeDashoffset:function(i){ return lens[i]; } })
+      .set(M.fl, { fillOpacity:0 })
+      .to(MESA, { opacity:1, duration:.95, ease:'power1.inOut' }, 0)
+      .add(function(){ MESA._ready = true; }, 1.02)
+      .to(M.spot, { opacity:1, duration:1.4, ease:'power1.out' }, 1.0)
+      .to(M.live, { opacity:1, duration:.35 }, 1.05)
+      .fromTo(M.m1, { y:28 }, { opacity:1, y:0, duration:.6, ease:'power3.out' }, 1.3)
+      .fromTo(M.m2, { y:34, textShadow:'0 0 70px rgba(230,0,18,0.95)' }, { opacity:1, y:0, textShadow:'0 0 28px rgba(230,0,18,0.35)', duration:.95, ease:'power3.out', stagger:.08 }, 1.7)
+      .to(M.dr, { strokeDashoffset:0, duration:1.3, ease:'power2.inOut', stagger:.07 }, 1.25)
+      .to(M.fl, { fillOpacity:1, duration:.6 }, 2.35)
+      .fromTo(M.chips, { y:18 }, { opacity:1, y:0, duration:.45, ease:'power2.out', stagger:.16 }, 2.2)
+      .to(M.scr, { opacity:1, duration:.6 }, 2.75)
+      .fromTo(M.sym, { scale:.75, svgOrigin:'1532 406' }, { opacity:1, scale:1, svgOrigin:'1532 406', duration:.7, ease:'back.out(2)' }, 2.8)
+      .fromTo(M.chev, { y:-12 }, { opacity:.9, y:0, duration:.5, ease:'power2.out' }, 2.6)
+      .to(M.chev, { y:12, duration:.9, ease:'sine.inOut', yoyo:true, repeat:5 }, 3.1)
+      .add(function(){ G.set(M.dr, { clearProps:'strokeDasharray,strokeDashoffset' }); }, 3.2);
+    mesaTl = tl;
+  }
+  function mesaLift(){                       /* o pano sobe e revela o slide 7 */
+    mesaRest();
+    G.set(MESA, { opacity:1 });
+    mesaTl = G.to(MESA, { y:-1080, duration:1.0, ease:'power3.in', onComplete:function(){ G.set(MESA, { opacity:0, y:0 }); } });
+  }
+  function mesaDrop(){                       /* voltando do 7: o pano desce */
+    mesaRest();
+    G.set(MESA, { opacity:1, y:-1080 });
+    MESA._ready = true;
+    mesaTl = G.to(MESA, { y:0, duration:1.05, ease:'power3.out' });
+  }
+  function mesaFade(){
+    if (mesaTl){ mesaTl.kill(); mesaTl = null; }
+    MESA._ready = false;
+    mesaTl = G.to(MESA, { opacity:0, duration:.45, onComplete:function(){ mesaRest(); G.set(MESA, { y:0 }); } });
+  }
+  function mesa(n, anim, from){
+    var v = n === S_MESA;
+    if (MESA._v === v) return;
+    MESA._v = v;
+    if (!anim){
+      mesaRest();
+      MESA._ready = v;
+      if (G) G.set(MESA, { y:0, opacity: v ? 1 : 0 }); else { MESA.style.opacity = v ? '1' : '0'; MESA.style.transform = ''; }
+      return;
+    }
+    if (v){ if (from > S_MESA) mesaDrop(); else mesaEnter(); }
+    else { if (n === S_MESA + 1 && MESA._ready && atTarget(n)) mesaLift(); else mesaFade(); }
+  }
+
+  function overlays(n, anim, dur, from){
+    mesa(n, anim, from);
+    var el = FIM, v = n === S_FIM;           /* o fechamento fica sempre montado: só a opacidade muda (sem piscar) */
+    if (el._v === v) return;
+    el._v = v;
+    if (!anim){
+      if (G) G.killTweensOf(el);
+      el.style.opacity = v ? '1' : '0';
+    } else {
+      G.to(el, { opacity: v ? 1 : 0, duration: v ? .35 : .3, delay: v ? dur * .8 : 0, overwrite:true });
+    }
+  }
+
+  function pad(i){ return (i < 10 ? '0' : '') + i; }
+  function hud(n){
+    document.getElementById('cbV').textContent = 'VISTA ' + pad(n + 1) + ' · ' + SL[n].v;
+    document.getElementById('cbE').textContent = 'ESC 1:' + Math.round(SL[n].c[2] / 1920);
+    document.getElementById('cbN').innerHTML = '<span class="ac">' + (n + 1) + '</span> / ' + N;
+  }
+
+  function go(n, anim, fromHist){
+    n = Math.max(0, Math.min(N - 1, n));
+    if (n === cur) return;
+    var from = cur; cur = n;
+    if (!fromHist) try {
+      if (anim && from >= 0) history.pushState({ s:n + 1 }, '', '#s' + (n + 1));
+      else history.replaceState({ s:n + 1 }, '', '#s' + (n + 1));
+    } catch (e) {}
+    document.documentElement.classList.toggle('na-mesa', n === S_MESA);
+    calls.forEach(function(c){ c.kill(); }); calls = [];
+    if (flight){ flight.kill(); flight = null; }
+    document.getElementById('pulse').style.opacity = '0';
+    var t = SL[n].c;
+    anim = !!(anim && G && !RM && from >= 0);
+    if (!anim){
+      cam.x = t[0]; cam.y = t[1]; cam.w = t[2]; cam.r = 0;
+      world.classList.remove('moving');
+      hud(n); setCam(); state(n, false, 0); overlays(n, false, 0, from);
+      return;
+    }
+    function jumpCam(){ cam.x = t[0]; cam.y = t[1]; cam.w = t[2]; cam.r = 0; world.classList.remove('moving'); setCam(); }
+    if (n === S_MESA && from < S_MESA){
+      /* apagar as luzes sobre o slide atual; a câmera só vai para o 7 quando a cena já está toda escura */
+      hud(n); state(n, true, .6); overlays(n, true, .6, from);
+      calls.push(G.delayedCall(1.0, jumpCam));
+      return;
+    }
+    if (from === S_MESA && n !== S_MESA + 1){
+      /* saindo da mesa para trás: a câmera vai por baixo da cena escura e só então ela some */
+      hud(n); jumpCam(); state(n, false, 0); overlays(n, true, .6, from);
+      return;
+    }
+    if (atTarget(n)){
+      hud(n); state(n, true, .6); overlays(n, true, .6, from);
+      return;
+    }
+    var path = zoomPath([cam.x, cam.y, cam.w], [t[0], t[1], t[2]]);
+    var dur = Math.max(1.2, Math.min(2.4, path.S * .55 + .65));
+    var r0 = cam.r, amp = (n > from ? 1 : -1) * (Math.abs(n - from) === 1 ? 1.6 : .9);
+    var o = { t:0 };
+    world.classList.add('moving');
+    flight = G.to(o, { t:1, duration:dur, ease:'power2.inOut',
+      onUpdate:function(){
+        var v = path(o.t);
+        cam.x = v[0]; cam.y = v[1]; cam.w = v[2];
+        cam.r = r0 * (1 - o.t) + amp * Math.sin(Math.PI * o.t);
+        setCam();
+        /* o will-change sai na parte lenta do pouso: o re-raster nítido acontece ainda em movimento */
+        if (this.progress() > .88 && world.classList.contains('moving')) world.classList.remove('moving');
+      },
+      onComplete:function(){
+        cam.x = t[0]; cam.y = t[1]; cam.w = t[2]; cam.r = 0;
+        setCam(); world.classList.remove('moving'); flight = null;
+      }
+    });
+    calls.push(G.delayedCall(dur * .6, function(){ hud(n); }));
+    state(n, true, dur);
+    overlays(n, true, dur, from);
+    pulse(from, n, dur);
+  }
+  function atTarget(n){ var t = SL[n].c; return Math.abs(cam.x - t[0]) + Math.abs(cam.y - t[1]) + Math.abs(cam.w - t[2]) < 1; }
+  function next(){ go(cur + 1, true); }
+  function prev(){ go(cur - 1, true); }
+
+  function toggleFs(){
+    try {
+      var d = document, el = d.documentElement, pr;
+      if (d.fullscreenElement || d.webkitFullscreenElement){
+        pr = d.exitFullscreen ? d.exitFullscreen() : (d.webkitExitFullscreen && d.webkitExitFullscreen());
+      } else {
+        pr = el.requestFullscreen ? el.requestFullscreen() : (el.webkitRequestFullscreen && el.webkitRequestFullscreen());
+      }
+      if (pr && pr.catch) pr.catch(function(){});
+    } catch (e) {}
+  }
+
+  /* tema claro/escuro: tecla T ou botão no canto; a escolha fica guardada no navegador */
+  var BT = document.getElementById('tema');
+  function setTheme(dark){
+    document.documentElement.classList.toggle('dark', dark);
+    try { localStorage.setItem('pontow-tema', dark ? 'escuro' : 'claro'); } catch (e) {}
+  }
+  function toggleTheme(){ setTheme(!document.documentElement.classList.contains('dark')); }
+  try { if (localStorage.getItem('pontow-tema') === 'escuro') document.documentElement.classList.add('dark'); } catch (e) {}
+  BT.addEventListener('click', function(e){ e.stopPropagation(); toggleTheme(); BT.blur(); });
+
+  window.addEventListener('keydown', function(e){
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === 'Enter' || (k === ' ' && !e.shiftKey)){ e.preventDefault(); next(); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace' || (k === ' ' && e.shiftKey)){ e.preventDefault(); prev(); }
+    else if (k === 'Home'){ e.preventDefault(); go(0, true); }
+    else if (k === 'End'){ e.preventDefault(); go(N - 1, true); }
+    else if (k === 'f' || k === 'F'){ e.preventDefault(); toggleFs(); }
+    else if (k === 't' || k === 'T'){ e.preventDefault(); toggleTheme(); }
+  });
+  var lastClick = -1e9, focusAt = -1e9;
+  window.addEventListener('focus', function(){ focusAt = performance.now(); });
+  document.addEventListener('click', function(e){
+    var now = performance.now();
+    if (now - lastClick < 350 || now - focusAt < 400){ lastClick = now; return; }
+    lastClick = now;
+    if (e.clientX >= window.innerWidth / 2) next(); else prev();
+  });
+
+  /* botão de tema some sozinho depois de ~2,5 s sem mexer o mouse */
+  var btTimer = null;
+  function showBt(){ BT.classList.remove('oculto'); clearTimeout(btTimer); btTimer = setTimeout(function(){ BT.classList.add('oculto'); }, 2500); }
+  window.addEventListener('mousemove', showBt); showBt();
+
+  function fromHash(){
+    var m = /^#s(\d+)$/.exec(window.location.hash || '');
+    return m ? Math.max(1, Math.min(N, +m[1])) - 1 : 0;
+  }
+  function fromNav(){ var n = fromHash(); if (n !== cur){ var a = Math.abs(n - cur) === 1; go(n, a, true); } }
+  window.addEventListener('popstate', fromNav);
+  window.addEventListener('hashchange', fromNav);
+
+  go(fromHash(), false);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.remove('instant'); }); });
+})();
+</script>
