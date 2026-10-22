@@ -187,6 +187,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:var(--page);overf
 #world [style*="color:#17945C"]{color:var(--green-t) !important}
 
 :root.dark #wire rect[width="9520"], :root.dark #wire rect[width="9472"]{stroke:#3A3A40}
+/* capa: anel e W em corte desenhados pelo fio */
+#wire .cw-bg{stroke:var(--paper)}
+#wire .cw-gray{stroke:var(--gray-d)}
 
 /* botão de tema (sol/lua) */
 #tema{position:absolute;top:22px;right:22px;z-index:12;width:46px;height:46px;padding:0;border-radius:50%;cursor:pointer;
@@ -214,9 +217,30 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:var(--page);overf
       <pattern id="hatch" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <line x1="0" y1="0" x2="0" y2="16" stroke="#141413" stroke-opacity=".35" stroke-width="3"/>
       </pattern>
+      <pattern id="hInk" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="14" stroke="#141413" stroke-opacity=".34" stroke-width="3"/>
+      </pattern>
+      <pattern id="hRed" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="14" stroke="#E60012" stroke-opacity=".65" stroke-width="3"/>
+      </pattern>
+      <mask id="mW" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080"><path d="M383 465.3 L470.6 651.3 L580 388.7 L689.4 651.3 L777 465.3" fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linejoin="miter"/></mask>
+      <mask id="mR" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080"><circle cx="580" cy="520" r="290" fill="none" stroke="#FFFFFF" stroke-width="34"/></mask>
     </defs>
     <rect x="40" y="40" width="9520" height="4240" fill="none" stroke="#141413" stroke-width="4"/>
     <rect x="64" y="64" width="9472" height="4192" fill="none" stroke="#141413" stroke-opacity=".3" stroke-width="2"/>
+
+    <!-- capa: o fio da rede desenha o W (anel e W em corte + linhas de construção) -->
+    <g class="cw-gray" fill="none" stroke-width="1.5" stroke-dasharray="26 7 4 7">
+      <line x1="236" y1="520" x2="914" y2="520"/>
+      <line x1="580" y1="176" x2="580" y2="864"/>
+      <circle cx="580" cy="520" r="336" stroke-dasharray="3 11"/>
+    </g>
+    <circle cx="580" cy="520" r="290" fill="none" stroke="#E60012" stroke-width="38"/>
+    <circle class="cw-bg" cx="580" cy="520" r="290" fill="none" stroke-width="34"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#hRed)" mask="url(#mR)"/>
+    <path d="M383 465.3 L470.6 651.3 L580 388.7 L689.4 651.3 L777 465.3" fill="none" stroke="#141413" stroke-width="60" stroke-linejoin="miter"/>
+    <path class="cw-bg" d="M383 465.3 L470.6 651.3 L580 388.7 L689.4 651.3 L777 465.3" fill="none" stroke-width="56" stroke-linejoin="miter"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#hInk)" mask="url(#mW)"/>
 
     <path class="glow" data-k="1" d="M930 2380 V2660 Q930 2700 970 2700 H1060"/>
     <path class="glow" data-k="2" d="M1060 2700 H2020"/>
@@ -225,8 +249,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:var(--page);overf
     <path class="glow" data-k="5" d="M3940 2700 H4900"/>
     <path class="glow" data-k="6" d="M4900 2700 H5820 Q5860 2700 5860 2660 V1960"/>
 
-    <path id="bus" d="M0 840 H620 L660 880 L712 700 L766 900 L800 840 H890 Q930 840 930 880 V2660 Q930 2700 970 2700 H5820 Q5860 2700 5860 2660 V1960"/>
-    <circle cx="712" cy="700" r="13" fill="#F4F2EE" stroke="#E60012" stroke-width="6"/>
+    <path id="bus" d="M0 465.3 H383 L470.6 651.3 L580 388.7 L689.4 651.3 L777 465.3 H890 Q930 465.3 930 505.3 V2660 Q930 2700 970 2700 H5820 Q5860 2700 5860 2660 V1960"/>
+    <circle cx="580" cy="388.7" r="13" fill="#F4F2EE" stroke="#E60012" stroke-width="6"/>
 
     <!-- ramais até cada detalhe -->
     <line class="fd" data-k="1" x1="1060" y1="2764" x2="1060" y2="2806"/>
@@ -260,45 +284,15 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:var(--page);overf
 
   <!-- ===== VISTA 01 · CAPA (canto superior esquerdo) ===== -->
   <div class="sheet" id="capa" style="left:0;top:0">
-    <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080" viewBox="0 0 1920 1080">
-      <!-- planta do Standard: 2 vagas de 2,5 × 5,0 m + faixa do carregador -->
-      <rect x="1260" y="200" width="500" height="60" fill="url(#hatch)"/>
-      <rect x="1260" y="200" width="500" height="560" fill="none" stroke="#141413" stroke-width="4"/>
-      <line x1="1260" y1="260" x2="1760" y2="260" stroke="#141413" stroke-width="3"/>
-      <line x1="1510" y1="260" x2="1510" y2="760" stroke="#141413" stroke-width="3" stroke-dasharray="22 12"/>
-      <rect x="1366" y="210" width="40" height="40" fill="#E60012"/>
-      <rect x="1616" y="210" width="40" height="40" fill="#E60012"/>
-      <rect x="1325" y="320" width="120" height="330" rx="34" fill="none" stroke="#141413" stroke-width="3"/>
-      <rect x="1343" y="372" width="84" height="64" rx="10" fill="none" stroke="#141413" stroke-width="2.5"/>
-      <rect x="1343" y="548" width="84" height="44" rx="10" fill="none" stroke="#141413" stroke-width="2.5"/>
-      <path d="M1385 320 V270" stroke="#E60012" stroke-width="4" stroke-dasharray="8 6"/>
-      <!-- cotas -->
-      <g stroke="#141413" stroke-width="2.5">
-        <line x1="1260" y1="772" x2="1260" y2="826"/><line x1="1760" y1="772" x2="1760" y2="826"/>
-        <line x1="1260" y1="810" x2="1760" y2="810"/>
-        <line x1="1250" y1="820" x2="1270" y2="800"/><line x1="1750" y1="820" x2="1770" y2="800"/>
-        <line x1="1772" y1="200" x2="1836" y2="200"/><line x1="1772" y1="760" x2="1836" y2="760"/>
-        <line x1="1820" y1="200" x2="1820" y2="760"/>
-        <line x1="1810" y1="210" x2="1830" y2="190"/><line x1="1810" y1="770" x2="1830" y2="750"/>
-        <line x1="1510" y1="540" x2="1760" y2="540"/>
-        <line x1="1500" y1="550" x2="1520" y2="530"/><line x1="1750" y1="550" x2="1770" y2="530"/>
-      </g>
-      <g data-min="24" font-family="IBM Plex Mono, Consolas, monospace" font-size="24" fill="#141413">
-        <text x="1510" y="852" text-anchor="middle">5,0 m</text>
-        <text x="1856" y="480" text-anchor="middle" transform="rotate(-90 1856 480)">5,6 m</text>
-        <text x="1635" y="526" text-anchor="middle">2,5 m</text>
-        <text x="1385" y="736" text-anchor="middle">VAGA 1</text>
-        <text x="1635" y="736" text-anchor="middle">VAGA 2</text>
-      </g>
-    </svg>
-    <div class="kick abs" style="left:1260px;top:146px" data-min="24">Planta · Standard · 2 vagas</div>
+    <!-- o anel e o W ficam no #wire, por baixo do fio; aqui só os textos -->
+    <div class="kick abs" style="left:96px;top:424px" data-min="24">Rede →</div>
+    <div class="kick abs" style="left:280px;top:884px;width:600px;text-align:center" data-min="24">O fio da rede desenha o W</div>
 
-    <div class="kick abs" style="left:120px;top:146px" data-min="24">EV Challenge GoodWe × FIAP · 2026.2</div>
-    <svg width="210" height="210" viewBox="0 0 120 120" role="img" aria-label="Ponto W" class="abs" style="left:120px;top:250px"><circle cx="60" cy="60" r="53" fill="none" stroke="#E60012" stroke-width="7"/><path d="M24 50 L40 84 L60 36 L80 84 L96 50" fill="none" stroke="#141413" stroke-width="11" stroke-linejoin="miter" stroke-linecap="butt"/></svg>
-    <div class="abs" data-min="120" style="left:393px;top:278px;font-family:var(--fc);font-weight:700;font-size:120px;line-height:.9;letter-spacing:-.02em;white-space:nowrap">PONTO <span class="red">W</span></div>
-    <div class="abs" style="left:397px;top:404px;font-family:var(--fm);font-weight:500;font-size:24px;letter-spacing:.34em;color:var(--gray-d);white-space:nowrap" data-min="24">ELETROPOSTOS INTELIGENTES</div>
-    <div class="abs" style="left:120px;top:548px;font-family:var(--fc);font-weight:600;font-size:56px;line-height:1;letter-spacing:-.02em;white-space:nowrap" data-min="56">Rentável. Escalável. <span class="red">Tecnológica.</span></div>
-    <div class="abs" style="left:120px;top:652px;padding:6px 0 6px 20px;border-left:8px solid var(--red);font-family:var(--fc);font-weight:600;font-size:40px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" data-min="40">Uma franquia GoodWe</div>
+    <div class="kick abs" style="left:1080px;top:146px" data-min="24">EV Challenge GoodWe × FIAP · 2026.2</div>
+    <div class="abs" data-min="150" style="left:1072px;top:226px;font-family:var(--fc);font-weight:700;font-size:150px;line-height:.9;letter-spacing:-.03em;white-space:nowrap">PONTO <span class="red">W</span></div>
+    <div class="abs" style="left:1080px;top:390px;font-family:var(--fm);font-weight:500;font-size:24px;letter-spacing:.34em;color:var(--gray-d);white-space:nowrap" data-min="24">ELETROPOSTOS INTELIGENTES</div>
+    <div class="abs" style="left:1080px;top:476px;font-family:var(--fc);font-weight:600;font-size:64px;line-height:1.06;letter-spacing:-.02em;white-space:nowrap" data-min="64">Rentável.<br>Escalável.<br><span class="red">Tecnológica.</span></div>
+    <div class="abs" style="left:1080px;top:724px;padding:6px 0 6px 20px;border-left:8px solid var(--red);font-family:var(--fc);font-weight:600;font-size:40px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" data-min="40">Uma franquia GoodWe</div>
     <div class="kick abs" style="left:962px;top:902px;color:var(--ink)" data-min="24">↓ Início do fluxo</div>
   </div>
 
